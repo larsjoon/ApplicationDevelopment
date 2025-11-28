@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oostvaardersplassen Deer Simulation</title>
+    <!-- Import Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; height: 100vh; margin: 0; background-color: #f4f4f9; }
+        
+        /* Left Sidebar for Inputs */
+        .sidebar { width: 300px; padding: 20px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; gap: 15px; }
+        .sidebar h2 { color: #2c3e50; margin-top: 0; }
+        
+        label { font-weight: bold; font-size: 0.9em; margin-bottom: 5px; display: block; }
+        input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        small { color: #666; font-size: 0.8em; }
+        
+        button { 
+            padding: 10px; background-color: #27ae60; color: white; border: none; 
+            border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; margin-top: 10px;
+        }
+        button:hover { background-color: #219150; }
+
+        /* Main Area for Graph */
+        .content { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: center; }
+        .chart-wrapper { width: 90%; height: 80%; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Parameters</h2>
+        <div>
+            <label>Start Population (N0)</label>
+            <input type="number" id="startPop" value="50">
+        </div>
+        <div>
+            <label>Carrying Capacity (K)</label>
+            <input type="number" id="capacity" value="2000">
+            <small>Max sustainable animals</small>
+        </div>
+        <div>
+            <label>Discrete Growth (rd)</label>
+            <input type="number" id="growth" value="0.36" step="0.01">
+            <small>0.36 = 36% increase/year</small>
+        </div>
+        <div>
+            <label>Years</label>
+            <input type="number" id="years" value="50">
+        </div>
+        <button onclick="runSim()">Run Simulation</button>
+    </div>
+
+    <div class="content">
+        <div class="chart-wrapper">
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+
+        // Function called when button is clicked
+        async function runSim() {
+            // 1. Get values from inputs
+            const payload = {
+                startPopulation: document.getElementById('startPop').value,
+                carryingCapacity: document.getElementById('capacity').value,
+                discreteGrowthFactor: document.getElementById('growth').value,
+                yearsToSimulate: document.getElementById('years').value
+            };
+
+            try {
+                // 2. Send data to Java Backend
+                const response = await fetch('/api/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                // 3. Draw the chart
+                drawChart(data);
+            } catch (err) {
+                console.error("Error connecting to backend:", err);
+                alert("Could not connect to simulation server.");
+            }
+        }
+
+        function drawChart(data) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            if (myChart) myChart.destroy(); // Clear old chart
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.years,
+                    datasets: [
+                        {
+                            label: 'Deer Population',
+                            data: data.populationHistory,
+                            borderColor: '#e74c3c', // Red line
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Carrying Capacity (K)',
+                            data: data.carryingCapacityHistory,
+                            borderColor: '#27ae60', // Green line
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, title: {display: true, text: 'Population Size'} },
+                        x: { title: {display: true, text: 'Years'} }
+                    }
+                }
+            });
+        }
+
+        // Run once on load
+        window.onload = runSim;
+    </script>
+</body>
+</html>
