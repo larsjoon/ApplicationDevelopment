@@ -13,13 +13,8 @@ public class SimulationResponse {
         this.carryingCapacityHistory = carryingCapacityHistory;
     }
 
-    // Getters and Setters
+    // Getters
     public List<Integer> getYears() { return years; }
-    public void setYears(List<Integer> years) { this.years = years; }
-
     public List<Integer> getPopulationHistory() { return populationHistory; }
-    public void setPopulationHistory(List<Integer> populationHistory) { this.populationHistory = populationHistory; }
-
     public List<Integer> getCarryingCapacityHistory() { return carryingCapacityHistory; }
-    public void setCarryingCapacityHistory(List<Integer> carryingCapacityHistory) { this.carryingCapacityHistory = carryingCapacityHistory; }
 }

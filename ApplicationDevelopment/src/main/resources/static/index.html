@@ -3,97 +3,431 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oostvaardersplassen Deer Simulation</title>
-    <!-- Import Chart.js Library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Oostvaardersplassen Ecosystem Simulator</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; display: flex; height: 100vh; margin: 0; background-color: #f4f4f9; }
-        
-        /* Left Sidebar for Inputs */
-        .sidebar { width: 300px; padding: 20px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; gap: 15px; }
-        .sidebar h2 { color: #2c3e50; margin-top: 0; }
-        
-        label { font-weight: bold; font-size: 0.9em; margin-bottom: 5px; display: block; }
-        input { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        small { color: #666; font-size: 0.8em; }
-        
-        button { 
-            padding: 10px; background-color: #27ae60; color: white; border: none; 
-            border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; margin-top: 10px;
+        :root {
+            --primary: #27ae60;
+            --primary-dark: #1e8449;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --bg-light: #f8f9fa;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        button:hover { background-color: #219150; }
 
-        /* Main Area for Graph */
-        .content { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: center; }
-        .chart-wrapper { width: 90%; height: 80%; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* --- Header & Hero Section --- */
+        header {
+            background: var(--white);
+            border-bottom: 1px solid #eee;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .school-badge {
+            background: #e8f5e9;
+            color: var(--primary);
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            background: white;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* --- Info Grid --- */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .info-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--primary);
+        }
+
+        .info-card h3 { margin-top: 0; }
+
+        /* --- Simulator Layout --- */
+        .sim-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 4rem;
+            min-height: 600px;
+        }
+
+        .controls {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+            max-height: 800px;
+        }
+
+        .chart-area {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            padding: 1rem;
+        }
+
+        /* --- Input Styling --- */
+        h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--text-dark); }
+        
+        .control-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            color: #555;
+        }
+
+        .val-display {
+            float: right;
+            font-family: monospace;
+            color: var(--primary);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            border: 1px solid #e0e0e0;
+        }
+
+        input[type=range] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 0.5rem;
+            background: #e9ecef;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .toggle-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        button.run-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: auto;
+            transition: background 0.2s;
+        }
+
+        button.run-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Error Message */
+        #errorMessage {
+            display: none;
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            border: 1px solid #fecaca;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: auto;
+        }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h2>Parameters</h2>
-        <div>
-            <label>Start Population (N0)</label>
-            <input type="number" id="startPop" value="50">
+    <header>
+        <div class="container">
+            <div class="nav-brand">
+                <span class="school-badge">Project Application Development</span>
+                Population Dynamics Simulator
+            </div>
         </div>
-        <div>
-            <label>Carrying Capacity (K)</label>
-            <input type="number" id="capacity" value="2000">
-            <small>Max sustainable animals</small>
+    </header>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Oostvaardersplassen: A Rewilding Crisis?</h1>
+            <p>
+                The Oostvaardersplassen is a "rewilding" project aimed at creating a self-sustaining ecosystem. 
+                However, the rapid growth of large herbivore populations led to mass starvation and public outcry. 
+                This simulation models these dynamics to explore sustainable long-term solutions.
+            </p>
+        </section>
+
+        <!-- Educational Context -->
+        <section class="info-grid">
+            <div class="info-card">
+                <h3>🌲 The Context</h3>
+                <p>
+                    Established on reclaimed polder land in 1968, the Oostvaardersplassen hosts large grazers like Red Deer, Konik horses, and Heck cattle. 
+                    The area is managed by Staatsbosbeheer with a hands-off approach, intended to let nature take its course.
+                </p>
+            </div>
+            <div class="info-card">
+                <h3>📉 The Problem</h3>
+                <p>
+                    Populations grew unchecked due to a lack of migration options and natural predators. 
+                    This caused severe overgrazing and winter food shortages, leading to controversial mass die-offs and preemptive culling.
+                </p>
+            </div>
+            <div class="info-card">
+                <h3>🎯 Project Goals</h3>
+                <p>
+                    We aim to model population growth under different scenarios—such as introducing wolves or reducing herd sizes—to find a stable equilibrium 
+                    that minimizes human intervention and ensures animal welfare.
+                </p>
+            </div>
+        </section>
+
+        <!-- Simulator Interface -->
+        <h2 style="border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 1.5rem;">Interactive Model</h2>
+        
+        <div class="sim-container">
+            <!-- Sidebar Controls -->
+            <div class="controls">
+                <div class="control-group">
+                    <label>Scenario Preset</label>
+                    <div class="toggle-group">
+                        <div id="btn-nature" class="toggle-btn active" onclick="setMode('nature')">Natural Crash</div>
+                        <div id="btn-managed" class="toggle-btn" onclick="setMode('managed')">Managed</div>
+                        <div id="btn-wolves" class="toggle-btn" onclick="setMode('wolves')">Wolves</div>
+                    </div>
+                </div>
+
+                <hr style="border:0; border-top:1px solid #eee; margin: 10px 0;">
+
+                <div class="control-group">
+                    <label>Start Population (1983) <span id="startPopVal" class="val-display">50</span></label>
+                    <input type="range" id="startPop" min="10" max="1000" value="50" oninput="updateLabel('startPop', 'startPopVal')">
+                </div>
+
+                <div class="control-group">
+                    <label>Max Carrying Capacity <span id="capacityVal" class="val-display">2500</span></label>
+                    <input type="range" id="capacity" min="500" max="5000" step="100" value="2500" oninput="updateLabel('capacity', 'capacityVal')">
+                    <small style="font-size: 0.75rem; color: #888;">Declines yearly based on grass data</small>
+                </div>
+
+                <div class="control-group">
+                    <label>Growth Rate ($r_d$) <span id="growthVal" class="val-display">1.5</span></label>
+                    <input type="range" id="growth" min="0.1" max="3.0" step="0.1" value="1.5" oninput="updateLabel('growth', 'growthVal')">
+                </div>
+
+                <div class="control-group">
+                    <label>Time Lag ($\tau$) <span id="timeLagVal" class="val-display">2</span></label>
+                    <input type="range" id="timeLag" min="0" max="5" step="1" value="2" oninput="updateLabel('timeLag', 'timeLagVal')">
+                    <small style="font-size: 0.75rem; color: #888;">Delay in nature's feedback loop</small>
+                </div>
+
+                <div class="control-group">
+                    <label>Weather Chaos ($\sigma$) <span id="stochVal" class="val-display">0.1</span></label>
+                    <input type="range" id="stochasticity" min="0.0" max="0.5" step="0.05" value="0.1" oninput="updateLabel('stochasticity', 'stochVal')">
+                </div>
+
+                <button class="run-btn" onclick="runSim()">Run Simulation</button>
+            </div>
+
+            <!-- Chart Area -->
+            <div class="chart-area">
+                <div id="errorMessage"></div>
+                <div style="position: relative; height: 100%; width: 100%;">
+                    <canvas id="myChart"></canvas>
+                </div>
+            </div>
         </div>
-        <div>
-            <label>Discrete Growth (rd)</label>
-            <input type="number" id="growth" value="0.36" step="0.01">
-            <small>0.36 = 36% increase/year</small>
-        </div>
-        <div>
-            <label>Years</label>
-            <input type="number" id="years" value="50">
-        </div>
-        <button onclick="runSim()">Run Simulation</button>
     </div>
 
-    <div class="content">
-        <div class="chart-wrapper">
-            <canvas id="myChart"></canvas>
-        </div>
-    </div>
+    <footer>
+        <p>Project built with Java Spring Boot & Chart.js | Data source: Staatsbosbeheer / Wageningen University</p>
+    </footer>
 
+    <!-- Logic Script -->
     <script>
         let myChart = null;
+        let currentMode = 'nature';
 
-        // Function called when button is clicked
+        function updateLabel(id, valId) { 
+            document.getElementById(valId).innerText = document.getElementById(id).value; 
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            // Visual Update
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + mode).classList.add('active');
+            
+            // Logic Update based on preset
+            if(mode === 'wolves') {
+                // Wolves dampen growth, so we can be aggressive with inputs to show it works
+                document.getElementById('growth').value = 1.8;
+                document.getElementById('timeLag').value = 2;
+            } else if (mode === 'managed') {
+                // Management handles stability
+            } else {
+                // Nature defaults to crash parameters
+                document.getElementById('growth').value = 1.5;
+                document.getElementById('timeLag').value = 2;
+            }
+            
+            // Update labels
+            updateLabel('growth', 'growthVal');
+            updateLabel('timeLag', 'timeLagVal');
+
+            runSim(); 
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMessage');
+            el.innerText = msg;
+            el.style.display = 'block';
+        }
+
         async function runSim() {
-            // 1. Get values from inputs
+            // Hide error
+            document.getElementById('errorMessage').style.display = 'none';
+
+            if (typeof Chart === 'undefined') {
+                showError("Chart library failed to load.");
+                return;
+            }
+
             const payload = {
-                startPopulation: document.getElementById('startPop').value,
-                carryingCapacity: document.getElementById('capacity').value,
-                discreteGrowthFactor: document.getElementById('growth').value,
-                yearsToSimulate: document.getElementById('years').value
+                startYear: 1983,
+                endYear: 2025,
+                startPopulation: Number(document.getElementById('startPop').value),
+                carryingCapacity: Number(document.getElementById('capacity').value),
+                discreteGrowthFactor: Number(document.getElementById('growth').value),
+                timeLag: Number(document.getElementById('timeLag').value), 
+                stochasticity: Number(document.getElementById('stochasticity').value),
+                harvestAmount: 0, 
+                managementMode: (currentMode === 'managed'),
+                wolvesEnabled: (currentMode === 'wolves')
             };
 
+            const apiUrl = 'http://localhost:8080/api/simulate';
+
             try {
-                // 2. Send data to Java Backend
-                const response = await fetch('/api/simulate', {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
+                if (!response.ok) throw new Error(`Backend Error: ${response.status}`);
+                
                 const data = await response.json();
+                
+                if (!data || !data.years || data.years.length < 2) {
+                    throw new Error("Received empty data. Ensure Java backend is running.");
+                }
 
-                // 3. Draw the chart
                 drawChart(data);
-            } catch (err) {
-                console.error("Error connecting to backend:", err);
-                alert("Could not connect to simulation server.");
+            } catch (err) { 
+                console.error(err); 
+                showError("Simulation Failed: " + err.message);
             }
         }
 
         function drawChart(data) {
             const ctx = document.getElementById('myChart').getContext('2d');
-            
-            if (myChart) myChart.destroy(); // Clear old chart
+            if (myChart) myChart.destroy();
+
+            // Dynamic title based on mode
+            let titleText = 'Natural Population Crash';
+            if (currentMode === 'managed') titleText = 'Active Management (Culling)';
+            if (currentMode === 'wolves') titleText = 'Biological Control (Wolves)';
 
             myChart = new Chart(ctx, {
                 type: 'line',
@@ -101,35 +435,57 @@
                     labels: data.years,
                     datasets: [
                         {
-                            label: 'Deer Population',
+                            label: 'Red Deer Population',
                             data: data.populationHistory,
-                            borderColor: '#e74c3c', // Red line
-                            backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                            fill: true,
-                            tension: 0.4
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.1)', 
+                            fill: 'origin', 
+                            tension: 0.4,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
                         },
                         {
-                            label: 'Carrying Capacity (K)',
+                            label: 'Ecosystem Capacity (Grass Biomass)',
                             data: data.carryingCapacityHistory,
-                            borderColor: '#27ae60', // Green line
-                            borderDash: [5, 5],
+                            borderColor: '#27ae60',
                             borderWidth: 2,
-                            pointRadius: 0
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, title: {display: true, text: 'Population Size'} },
-                        x: { title: {display: true, text: 'Years'} }
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            title: {display:true, text:'Population Size'} 
+                        },
+                        x: { 
+                            title: {display:true, text:'Year'} 
+                        }
+                    },
+                    plugins: {
+                        title: { 
+                            display: true, 
+                            text: titleText,
+                            font: { size: 16 }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
             });
         }
 
-        // Run once on load
+        // Init
         window.onload = runSim;
     </script>
 </body>
